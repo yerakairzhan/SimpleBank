@@ -1,12 +1,15 @@
-name: Run tests
+name: Run unit tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
+
   test:
+    name: Test
     runs-on: ubuntu-latest
 
     services:
@@ -25,23 +28,24 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
 
-    - name: Set up Go
+    - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: '^1.16'
+        go-version: ^1.22
+      id: go
 
-    - name: Install dependencies
-      run: go mod tidy
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Install golang-migrate
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate.linux-amd64 /usr/bin/migrate
+        which migrate
 
     - name: Run migrations
-      run: |
-        export DB_SOURCE="postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
-        make migrateup
+      run: make migrateup
 
-    - name: Run tests
-      run: |
-        export DB_SOURCE="postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
-        make test
+    - name: Test
+      run: make test
