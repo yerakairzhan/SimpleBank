@@ -1,20 +1,17 @@
-name: Run unit tests
+name: Run tests
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    branches:
+      - main
 
 jobs:
-
   test:
-    name: Test
     runs-on: ubuntu-latest
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:13-alpine
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: secret
@@ -28,24 +25,23 @@ jobs:
           --health-retries 5
 
     steps:
-
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.22
-      id: go
-
-    - name: Check out code into the Go module directory
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install golang-migrate
-      run: |
-        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
-        sudo mv migrate.linux-amd64 /usr/bin/migrate
-        which migrate
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '^1.16'
+
+    - name: Install dependencies
+      run: go mod tidy
 
     - name: Run migrations
-      run: make migrateup
+      run: |
+        export DB_SOURCE="postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
+        make migrateup
 
-    - name: Test
-      run: make test
+    - name: Run tests
+      run: |
+        export DB_SOURCE="postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
+        make test
