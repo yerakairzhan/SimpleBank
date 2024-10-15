@@ -19,7 +19,7 @@ jobs:
           POSTGRES_PASSWORD: secret
           POSTGRES_DB: simple_bank
         ports:
-          - 5432:5432  # Optional: you can remove this, PostgreSQL is available via the 'postgres' service name
+          - 5432:5432  # Use the default port
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -43,7 +43,7 @@ jobs:
           which migrate
 
       - name: Run migrations
-        run: make migrateup
+        run: migrate -path db/migration -database "postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable" -verbose up
 
       - name: Test
         run: make test
