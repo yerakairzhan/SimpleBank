@@ -42,14 +42,9 @@ func (store *Store) GetAccount(ctx context.Context, id int64) (Account, error) {
 	return store.Queries.GetAccount(ctx, id)
 }
 
-// GetEntry retrieves an entry by ID
-func (store *Store) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	return store.Queries.GetEntry(ctx, id)
-}
-
-// GetTransfer retrieves a transfer by ID
-func (store *Store) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
-	return store.Queries.GetTransfer(ctx, id)
+// ListAccounts retrieves a list of accounts with pagination
+func (store *Store) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error) {
+	return store.Queries.ListAccounts(ctx, arg)
 }
 
 // TransferTxParams contains the input parameters for a transfer transaction
