@@ -18,7 +18,7 @@ func NewServer(store *db.Store) *Server { // Accept a pointer to Store
 
 	router.POST("/accounts", server.createAccount)
 	router.GET("/accounts/:id", server.getAccount)
-	//router.GET("/accounts", server.listAccounts)
+	router.GET("/accounts", server.listAccounts)
 
 	server.router = router
 	return server

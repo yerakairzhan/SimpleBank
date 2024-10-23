@@ -42,6 +42,12 @@ func (store *Store) GetAccount(ctx context.Context, id int64) (Account, error) {
 	return store.Queries.GetAccount(ctx, id)
 }
 
+//listAccounts should be there but i deleted it
+
+func (store *Store) ListAccounts(ctx context.Context, arg ListAccountParams) ([]Account, error) {
+	return store.Queries.ListAccount(ctx, arg)
+}
+
 // GetEntry retrieves an entry by ID
 func (store *Store) GetEntry(ctx context.Context, id int64) (Entry, error) {
 	return store.Queries.GetEntry(ctx, id)

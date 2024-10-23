@@ -62,6 +62,34 @@ func (server *Server) getAccount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, account)
 }
 
+type listAccountsRequest struct {
+	PageID   int32 `form:"page_id" binding:"required,min=1"`          // Page ID should be at least 1
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"` // Page size between 5 and 10
+}
+
+// listAccounts handles retrieving a list of accounts with pagination
+func (server *Server) listAccounts(ctx *gin.Context) {
+	var req listAccountsRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Use ListAccountParams instead of ListAccountsParams
+	arg := db.ListAccountParams{
+		Limit:  req.PageSize,
+		Offset: (req.PageID - 1) * req.PageSize,
+	}
+
+	accounts, err := server.store.ListAccounts(ctx, arg) // Correct method name
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, accounts)
+}
+
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }
