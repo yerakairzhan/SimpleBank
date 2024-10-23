@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/techschool/simplebank/util"
+	"github.com/yerakairzhan/SimpleBank/util"
 
 	_ "github.com/lib/pq"
 )
