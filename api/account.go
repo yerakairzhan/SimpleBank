@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,8 +28,8 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		Balance:  0,
 	}
 
-	account, err := server.store.Queries.CreateAccount(ctx, arg)
-
+	// Call CreateAccount directly on store
+	account, err := server.store.CreateAccount(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -41,10 +42,11 @@ type getAccountRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+// getAccount handles the request to get an account by ID
 func (server *Server) getAccount(ctx *gin.Context) {
 	var req getAccountRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	if err := ctx.ShouldBindUri(&req); err != nil || req.ID <= 0 { // Ensure valid ID
+		ctx.JSON(http.StatusBadRequest, errorResponse(fmt.Errorf("invalid account ID")))
 		return
 	}
 
@@ -75,18 +77,18 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
-	// Use ListAccountParams instead of ListAccountsParams
 	arg := db.ListAccountParams{
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
 
-	accounts, err := server.store.ListAccounts(ctx, arg) // Correct method name
-
+	// Call ListAccounts directly on store
+	accounts, err := server.store.ListAccount(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, accounts)
 }
 

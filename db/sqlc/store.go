@@ -6,21 +6,91 @@ import (
 	"fmt"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+type SQLStore struct {
 	db      *sql.DB
 	Queries *Queries
 }
 
+// AddAccountBalance implements Store.
+func (store *SQLStore) AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error) {
+	panic("unimplemented")
+}
+
+// CreateAccount implements Store.
+func (store *SQLStore) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
+	panic("unimplemented")
+}
+
+// CreateEntry implements Store.
+func (store *SQLStore) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
+	panic("unimplemented")
+}
+
+// CreateTransfer implements Store.
+func (store *SQLStore) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
+	panic("unimplemented")
+}
+
+// DeleteAccount implements Store.
+func (store *SQLStore) DeleteAccount(ctx context.Context, id int64) error {
+	panic("unimplemented")
+}
+
+// GetAccount implements Store.
+func (store *SQLStore) GetAccount(ctx context.Context, id int64) (Account, error) {
+	panic("unimplemented")
+}
+
+// GetAccountForUpdate implements Store.
+func (store *SQLStore) GetAccountForUpdate(ctx context.Context, id int64) (Account, error) {
+	panic("unimplemented")
+}
+
+// GetEntry implements Store.
+func (store *SQLStore) GetEntry(ctx context.Context, id int64) (Entry, error) {
+	panic("unimplemented")
+}
+
+// GetTransfer implements Store.
+func (store *SQLStore) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
+	panic("unimplemented")
+}
+
+// ListAccount implements Store.
+func (store *SQLStore) ListAccount(ctx context.Context, arg ListAccountParams) ([]Account, error) {
+	panic("unimplemented")
+}
+
+// ListEntries implements Store.
+func (store *SQLStore) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error) {
+	panic("unimplemented")
+}
+
+// ListTransfers implements Store.
+func (store *SQLStore) ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error) {
+	panic("unimplemented")
+}
+
+// UpdateAccount implements Store.
+func (store *SQLStore) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error) {
+	panic("unimplemented")
+}
+
 // NewStore creates a new Store object
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
 // execTx executes a function within a database transaction
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -38,7 +108,7 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 }
 
 // GetAccount retrieves an account by ID
-func (store *Store) GetAccount(ctx context.Context, id int64) (Account, error) {
+/*func (store *Store) GetAccount(ctx context.Context, id int64) (Account, error) {
 	return store.Queries.GetAccount(ctx, id)
 }
 
@@ -56,7 +126,7 @@ func (store *Store) GetEntry(ctx context.Context, id int64) (Entry, error) {
 // GetTransfer retrieves a transfer by ID
 func (store *Store) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
 	return store.Queries.GetTransfer(ctx, id)
-}
+}*/
 
 // TransferTxParams contains the input parameters for a transfer transaction
 type TransferTxParams struct {
@@ -75,7 +145,7 @@ type TransferTxResult struct {
 }
 
 // TransferTx performs a money transfer from one account to another within a transaction
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {

@@ -7,12 +7,12 @@ import (
 
 // Server serves HTTP requests for our banking service.
 type Server struct {
-	store  *db.Store // Use a pointer to Store here
+	store  db.Store // Use a pointer to Store here
 	router *gin.Engine
 }
 
 // NewServer creates a new HTTP server and sets up routing.
-func NewServer(store *db.Store) *Server { // Accept a pointer to Store
+func NewServer(store db.Store) *Server { // Accept a pointer to Store
 	server := &Server{store: store}
 	router := gin.Default()
 
