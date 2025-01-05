@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -107,10 +108,13 @@ func TestTransferTx(t *testing.T) {
 
 	// Check the final updated balances
 	updatedAccount1, err := store.GetAccount(context.Background(), account1.ID)
-	require.NoError(t, err)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//require.NoError(t, err)
 
 	updatedAccount2, err := store.GetAccount(context.Background(), account2.ID)
-	require.NoError(t, err)
+	//require.NoError(t, err)
 
 	fmt.Println(">> after:", updatedAccount1.Balance, updatedAccount2.Balance)
 

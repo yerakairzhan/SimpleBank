@@ -43,7 +43,7 @@ func (store *SQLStore) DeleteAccount(ctx context.Context, id int64) error {
 
 // GetAccount implements Store.
 func (store *SQLStore) GetAccount(ctx context.Context, id int64) (Account, error) {
-	panic("unimplemented")
+	return store.Queries.GetAccount(ctx, id)
 }
 
 // GetAccountForUpdate implements Store.
@@ -53,12 +53,12 @@ func (store *SQLStore) GetAccountForUpdate(ctx context.Context, id int64) (Accou
 
 // GetEntry implements Store.
 func (store *SQLStore) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	panic("unimplemented")
+	panic("unimplementedEntry")
 }
 
 // GetTransfer implements Store.
 func (store *SQLStore) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
-	panic("unimplemented")
+	panic("unimplemented HERE")
 }
 
 // ListAccount implements Store.
