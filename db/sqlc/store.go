@@ -16,6 +16,16 @@ type SQLStore struct {
 	Queries *Queries
 }
 
+func (store *SQLStore) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (store *SQLStore) GetUser(ctx context.Context, username string) (User, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // AddAccountBalance implements Store.
 func (store *SQLStore) AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error) {
 	panic("unimplemented")
@@ -53,12 +63,20 @@ func (store *SQLStore) GetAccountForUpdate(ctx context.Context, id int64) (Accou
 
 // GetEntry implements Store.
 func (store *SQLStore) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	panic("unimplementedEntry")
+	entry, err := store.Queries.GetEntry(ctx, id)
+	if err != nil {
+		return Entry{}, err
+	}
+	return entry, nil
 }
 
 // GetTransfer implements Store.
 func (store *SQLStore) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
-	panic("unimplemented HERE")
+	transfer, err := store.Queries.GetTransfer(ctx, id) // Call the sqlc-generated method
+	if err != nil {
+		return Transfer{}, err
+	}
+	return transfer, nil
 }
 
 // ListAccount implements Store.
@@ -82,7 +100,7 @@ func (store *SQLStore) UpdateAccount(ctx context.Context, arg UpdateAccountParam
 }
 
 // NewStore creates a new Store object
-func NewStore(db *sql.DB) Store {
+func NewStore(db *sql.DB) *SQLStore {
 	return &SQLStore{
 		db:      db,
 		Queries: New(db),

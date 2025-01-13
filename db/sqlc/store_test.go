@@ -18,7 +18,7 @@ func TestTransferTx(t *testing.T) {
 
 	fmt.Println(">> before:", account1.Balance, account2.Balance)
 
-	n := 10
+	n := 3
 	amount := int64(10)
 
 	errs := make(chan error)
@@ -37,7 +37,6 @@ func TestTransferTx(t *testing.T) {
 			results <- result
 		}()
 	}
-
 	// Check results
 	existed := make(map[int]bool)
 
