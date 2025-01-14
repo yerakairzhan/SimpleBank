@@ -17,8 +17,22 @@ type SQLStore struct {
 }
 
 func (store *SQLStore) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	//TODO implement me
-	panic("implement me")
+	row := store.db.QueryRowContext(ctx, createUser,
+		arg.Username,
+		arg.HashedPassword,
+		arg.FullName,
+		arg.Email,
+	)
+	var user User
+	err := row.Scan(
+		&user.Username,
+		&user.HashedPassword,
+		&user.FullName,
+		&user.Email,
+		&user.PasswordChangedAt,
+		&user.CreatedAt,
+	)
+	return user, err
 }
 
 func (store *SQLStore) GetUser(ctx context.Context, username string) (User, error) {
