@@ -6,122 +6,27 @@ import (
 	"fmt"
 )
 
+// Store defines all functions to execute db queries and transactions
 type Store interface {
 	Querier
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
+// SQLStore provides all functions to execute SQL queries and transactions
 type SQLStore struct {
-	db      *sql.DB
-	Queries *Queries
+	db *sql.DB
+	*Queries
 }
 
-func (store *SQLStore) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := store.db.QueryRowContext(ctx, createUser,
-		arg.Username,
-		arg.HashedPassword,
-		arg.FullName,
-		arg.Email,
-	)
-	var user User
-	err := row.Scan(
-		&user.Username,
-		&user.HashedPassword,
-		&user.FullName,
-		&user.Email,
-		&user.PasswordChangedAt,
-		&user.CreatedAt,
-	)
-	return user, err
-}
-
-func (store *SQLStore) GetUser(ctx context.Context, username string) (User, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-// AddAccountBalance implements Store.
-func (store *SQLStore) AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error) {
-	panic("unimplemented")
-}
-
-// CreateAccount implements Store.
-func (store *SQLStore) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	panic("unimplemented")
-}
-
-// CreateEntry implements Store.
-func (store *SQLStore) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
-	panic("unimplemented")
-}
-
-// CreateTransfer implements Store.
-func (store *SQLStore) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
-	panic("unimplemented")
-}
-
-// DeleteAccount implements Store.
-func (store *SQLStore) DeleteAccount(ctx context.Context, id int64) error {
-	panic("unimplemented")
-}
-
-// GetAccount implements Store.
-func (store *SQLStore) GetAccount(ctx context.Context, id int64) (Account, error) {
-	return store.Queries.GetAccount(ctx, id)
-}
-
-// GetAccountForUpdate implements Store.
-func (store *SQLStore) GetAccountForUpdate(ctx context.Context, id int64) (Account, error) {
-	panic("unimplemented")
-}
-
-// GetEntry implements Store.
-func (store *SQLStore) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	entry, err := store.Queries.GetEntry(ctx, id)
-	if err != nil {
-		return Entry{}, err
-	}
-	return entry, nil
-}
-
-// GetTransfer implements Store.
-func (store *SQLStore) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
-	transfer, err := store.Queries.GetTransfer(ctx, id) // Call the sqlc-generated method
-	if err != nil {
-		return Transfer{}, err
-	}
-	return transfer, nil
-}
-
-// ListAccount implements Store.
-func (store *SQLStore) ListAccount(ctx context.Context, arg ListAccountParams) ([]Account, error) {
-	panic("unimplemented")
-}
-
-// ListEntries implements Store.
-func (store *SQLStore) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error) {
-	panic("unimplemented")
-}
-
-// ListTransfers implements Store.
-func (store *SQLStore) ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error) {
-	panic("unimplemented")
-}
-
-// UpdateAccount implements Store.
-func (store *SQLStore) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error) {
-	panic("unimplemented")
-}
-
-// NewStore creates a new Store object
-func NewStore(db *sql.DB) *SQLStore {
+// NewStore creates a new store
+func NewStore(db *sql.DB) Store {
 	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-// execTx executes a function within a database transaction
+// ExecTx executes a function within a database transaction
 func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -132,42 +37,22 @@ func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) erro
 	err = fn(q)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("tx err: %v, rb error: %v", err, rbErr)
+			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
 		}
 		return err
 	}
+
 	return tx.Commit()
 }
 
-// GetAccount retrieves an account by ID
-/*func (store *Store) GetAccount(ctx context.Context, id int64) (Account, error) {
-	return store.Queries.GetAccount(ctx, id)
-}
-
-//listAccounts should be there but i deleted it
-
-func (store *Store) ListAccounts(ctx context.Context, arg ListAccountParams) ([]Account, error) {
-	return store.Queries.ListAccount(ctx, arg)
-}
-
-// GetEntry retrieves an entry by ID
-func (store *Store) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	return store.Queries.GetEntry(ctx, id)
-}
-
-// GetTransfer retrieves a transfer by ID
-func (store *Store) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
-	return store.Queries.GetTransfer(ctx, id)
-}*/
-
-// TransferTxParams contains the input parameters for a transfer transaction
+// TransferTxParams contains the input parameters of the transfer transaction
 type TransferTxParams struct {
 	FromAccountID int64 `json:"from_account_id"`
 	ToAccountID   int64 `json:"to_account_id"`
 	Amount        int64 `json:"amount"`
 }
 
-// TransferTxResult contains the result of a transfer transaction
+// TransferTxResult is the result of the transfer transaction
 type TransferTxResult struct {
 	Transfer    Transfer `json:"transfer"`
 	FromAccount Account  `json:"from_account"`
@@ -176,14 +61,14 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-// TransferTx performs a money transfer from one account to another within a transaction
+// TransferTx performs a money transfer from one account to the other.
+// It creates the transfer, add account entries, and update accounts' balance within a database transaction
 func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		// Create the transfer
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
 			FromAccountID: arg.FromAccountID,
 			ToAccountID:   arg.ToAccountID,
@@ -193,7 +78,6 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 			return err
 		}
 
-		// Create the entries
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
@@ -210,47 +94,37 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 			return err
 		}
 
-		// Get account balances and update them accordingly
 		if arg.FromAccountID < arg.ToAccountID {
-			// Lock the "from" account and update balance
-			result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-				ID:     arg.FromAccountID,
-				Amount: -arg.Amount,
-			})
-			if err != nil {
-				return err
-			}
-
-			// Lock the "to" account and update balance
-			result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-				ID:     arg.ToAccountID,
-				Amount: arg.Amount,
-			})
-			if err != nil {
-				return err
-			}
+			result.FromAccount, result.ToAccount, err = addMoney(ctx, q, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
 		} else {
-			// Lock the "to" account and update balance first
-			result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-				ID:     arg.ToAccountID,
-				Amount: arg.Amount,
-			})
-			if err != nil {
-				return err
-			}
-
-			// Lock the "from" account and update balance
-			result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
-				ID:     arg.FromAccountID,
-				Amount: -arg.Amount,
-			})
-			if err != nil {
-				return err
-			}
+			result.ToAccount, result.FromAccount, err = addMoney(ctx, q, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
 		}
 
-		return nil
+		return err
 	})
 
 	return result, err
+}
+
+func addMoney(
+	ctx context.Context,
+	q *Queries,
+	accountID1 int64,
+	amount1 int64,
+	accountID2 int64,
+	amount2 int64,
+) (account1 Account, account2 Account, err error) {
+	account1, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+		ID:     accountID1,
+		Amount: amount1,
+	})
+	if err != nil {
+		return
+	}
+
+	account2, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+		ID:     accountID2,
+		Amount: amount2,
+	})
+	return
 }
